@@ -1,0 +1,56 @@
+﻿#include "machinecontrl.h"
+#include "config.h"
+
+machineContrl::machineContrl(QObject *parent)
+{
+
+}
+
+machineContrl::~machineContrl(){
+
+}
+
+void machineContrl::open(bool &flag,int baudrate,QString portName,
+                                int dirctions, int  dataBit,int StopBit,
+                                int controlBit,int checkBit)
+{
+    m_pport = myport::Otherserialport::GetInstance();
+    flag = m_pport->Otherserialport::open(baudrate,portName,dirctions,dataBit,StopBit,controlBit,checkBit);
+}
+
+void  machineContrl::sendInfo(bool &flag, char *cmd, int len){
+    flag = m_pport->sendInfo(cmd,len);
+    return;
+}
+
+void  machineContrl::close(){
+    m_pport->close();
+}
+
+void machineContrl::testConnect(bool &flag){
+    flag = false;
+    m_pport = myport::Otherserialport::GetInstance();
+
+    QByteArray arr;
+    arr.resize(2);
+    arr[0] = 0xa5;
+    arr[1] = 0x65;
+    bool isOk = m_pport->sendInfo(arr.data(),2);
+    if(!isOk){
+        qWarning() << QString("发送指令%1失败").arg(arr.data());
+        return;
+    }
+    int count = 10;
+    flag = m_pport->waitForData(count,DefaultTimeout);
+}
+
+
+void machineContrl::flushReadCache(){
+    m_pport = myport::Otherserialport::GetInstance();
+    m_pport->flushReadCache();
+}
+
+
+void machineContrl::readData(bool flag,int count,int timeout,QByteArray& arr){
+    
+}
