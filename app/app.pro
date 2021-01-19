@@ -1,5 +1,5 @@
 QT       += core gui printsupport
-QT       += serialport xlsx
+QT       += serialport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
@@ -14,12 +14,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
+CONFIG += -static
 
 #LIBS += -L$$PWD\lib -llidarTools
-LIBS += -L$$OUT_PWD\release -llidarTools
+LIBS += -L$$PWD\lib -llidarTools
 INCLUDEPATH += $$PWD\..\lidarTools \
-DEPENDPATH += $$PWD\..\lidarTools \
+#DEPENDPATH += $$PWD\..\lidarTools \
 
 INCLUDEPATH += \
     $$PWD\..\3rdParty\eigen-3.3.7
@@ -64,11 +64,11 @@ FORMS += \
     pages/TempSensor/temp_sensor_settings.ui \
     pages/TofCalibrt/tof_calibrt.ui
 
-
+include(../3rdParty/qtxlsx/src/xlsx/qtxlsx.pri)
 
 # Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
+#qnx: target.path = /tmp/$${TARGET}/bin
+#else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \

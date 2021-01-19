@@ -12,10 +12,9 @@ SOURCES += \
         DistanceCalibrt/distancecalibrt.cpp \
         DistanceCalibrt/machinecontrl.cpp \
         TempCalibrt/tempcalibrt.cpp \
-        myseriaport.cpp \
-        otherserialport.cpp
+        myseriaport.cpp
 
-DESTDIR = $$OUT_PWD\..\app\release
+DESTDIR = $$PWD\..\app\lib
 #E:\code\App\lidarTools\bin
 
 HEADERS += \
@@ -23,8 +22,7 @@ HEADERS += \
     DistanceCalibrt/machinecontrl.h \
     TempCalibrt/tempcalibrt.h \
     config.h \
-    myseriaport.h \
-    otherserialport.h
-DEFINES += QT_NO_DEBUG_OUTPUT
+    myseriaport.h
+#DEFINES += QT_NO_DEBUG_OUTPUT
 
 

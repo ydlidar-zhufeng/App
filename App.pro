@@ -3,5 +3,5 @@ SUBDIRS += \
      lidarTools \
      app
 
-CONFIG+=ordered
+#CONFIG+=ordered
 
