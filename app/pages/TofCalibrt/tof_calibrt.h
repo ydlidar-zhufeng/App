@@ -7,7 +7,9 @@
 #include <QSerialPort>
 #include "DistanceCalibrt/machinecontrl.h"
 #include "DistanceCalibrt/distancecalibrt.h"
-
+#include <QStandardItemModel>
+#include <global.h>
+#include <QLineEdit>
 #if _MSC_VER >= 1600
 #pragma execution_character_set("utf-8")
 #endif
@@ -27,7 +29,6 @@ public:
     void emitClose();
 
 private slots:
-    void on_btnsendcmd_clicked();
     void on_btncontrl_clicked();
     void on_btndata_clicked();
     void on_btnexcel_clicked();
@@ -35,15 +36,50 @@ private slots:
     void getPortnameList(bool flag=false);
     void on_btndtrcontrol_clicked();
 
-//    void on_btnturnleft_clicked();
-
-//    void on_btnturnright_clicked();
-
-    void on_btnAppendTable_clicked();
-
     void on_btnClearTable_clicked();
+    void on_btnbackOnce_clicked();
+
+    void  slot_add_log(QString & txt);
+
+    void on_btnImportExcel_clicked();
+
+    void on_btnWritePararmts_clicked();
+
+    void on_checkBox_stateChanged(int arg1);
+
+    void on_btnDtrTableAdd_clicked();
+
+    void on_btnDtrTableDelRow_clicked();
+
+    void on_btnOnceRun_clicked();
+
+    void on_btnLimitSig_clicked();
+
+    void on_btnAllRun_clicked();
+
+    void on_btnClearModu_clicked();
+
+    void on_btnTest_clicked();
+
+    void on_btnReadLimitSig_clicked();
+
+    void on_btnPositionSetZero_clicked();
+
+    void on_btnFrontRun_clicked();
+
+    void on_btnBackRun_clicked();
+
+    void on_btnDtrStop_clicked();
+
+    void on_btnReturnZeroPos_clicked();
+
+    void on_btnGetCurrentPos_clicked();
+
+    void on_btntableDtrClear_clicked();
+
 public slots:
     void slot_exit_thread();
+    void slot_btn_once_run();
 
 signals:
     void  sig_tof_open(bool &flag,int baudrate,QString portName,
@@ -64,6 +100,7 @@ signals:
     void sig_dtr_sendInfo(bool &flag,char* cmd,const int len);
 
     void sig_tof_flushReadCache();
+    void sig_tof_getData(QByteArray &data);
     void sig_dtr_flushReadCache();
 
     void sig_tof_testConnect(bool &flag);
@@ -72,12 +109,29 @@ signals:
 
     void sig_dtr_readData(bool &flag,int count ,int timeout,QByteArray& arr);
     void sig_exit_thread();
+
+    void sig_btn_once_run();
 private:
     void init();
     void initConnect();
-    void modulusPoints();
-    Ui::tof_calibrt *ui;
+    bool modulusPoints();
+    void controlBtn();
+    void dtr_once_cal(int dis,int speech,int direction);
+    bool read_current_pos(QLineEdit *edit);
+
+    bool read_one_register_func(read_register& addr,uint16_t& data);
+    bool read_two_register_func(read_register& addr,uint16_t& data_first,uint16_t& data_second);
+    bool read_four_register_func(read_register& addr,uint16_t* data_arr);
+    bool write_single_register(write_single_address& addr);
+    bool write_four_register(write_four_address& addr);
+    bool write_two_register(write_two_address& addr);
+    void getOncePointData();
+    void loadConfig();
+    void saveConfig();
+    void GetDtrParm();
+    void  setDTRBtnStatus(bool status);
 private:
+    Ui::tof_calibrt *ui;
     bool tof_status;
     bool dtr_status;
     QThread*  p_dtrThd;
@@ -87,6 +141,12 @@ private:
     DistanceCalibrt *p_calibrt;
     machineContrl    *p_machiCtl;
     int              array_index;
+    bool          tableMax;
+    int       sheetNum;
+    int       lastTableRow;
+    QFont      *logFont;
+    Tof_Para_Type tof_para[6];
+    QStandardItemModel *m_pDtrmodel;
 };
 
 #endif // TOF_CALIBRT_H

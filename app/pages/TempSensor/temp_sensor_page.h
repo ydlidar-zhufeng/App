@@ -39,7 +39,6 @@ private slots:
     void slot_save_clicked();
     void slot_modulus_clicked();
 
-    void slot_destroyed();
 signals:
     void sig_stop_clicked();
 

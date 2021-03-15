@@ -73,7 +73,7 @@ QMap<QString, QString> AppManager::getThemeList() const
 
 void AppManager::updateStylesheet()
 {
-    QString appThemePath = QString(":/static/themes/%1/style").arg("light"); //mSettingManager->getThemeName()
+    QString appThemePath = QString(":/static/themes/%1/style").arg("default"); //mSettingManager->getThemeName()
     mStyleValues = new QSettings(QString("%1/values.ini").arg(appThemePath), QSettings::IniFormat);
 
     mStylesheetFileContent = AppManager::readStringFromFile(QString("%1/style.qss").arg(appThemePath),QIODevice::ReadOnly);

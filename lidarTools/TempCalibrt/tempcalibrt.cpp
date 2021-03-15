@@ -5,10 +5,8 @@
 
 using namespace  std;
 
-TempCalibrt::TempCalibrt(QObject *parent):QObject(parent) //myport::MySeriaPort *port_
+TempCalibrt::TempCalibrt(QObject *parent):QObject(parent)
 {
-    //port = myport::MySeriaPort::GetInstance();
-    //port->setParent(port);
 }
 
 TempCalibrt::~TempCalibrt(){
@@ -20,53 +18,39 @@ void TempCalibrt::init(){
 }
 
 void  TempCalibrt::getTempValue(float& temp,bool &flag,int timeout){
- //   port = port->GetInstance();
-    qDebug() << "" << QThread::currentThreadId();
-    qDebug() << "";
     if(!port->isOpen()){
         qCritical() << "port is not open!";
         flag = false;
         return;
     }
-    //memset(buffer,0,TemperatureValueSize +1);
-    int m =GetTempTimes;//MaxTempScanFreq
+    int m =GetTempTimes;
     int maxSize = GetTempTimes;
     int tempAll = 0;
     qint64 startTime = QDateTime::currentMSecsSinceEpoch();
-   // qint64 midTime,endTime;
     char  buf[TemperatureValueSize];
     memset(buf,0,TemperatureValueSize);
 
     QByteArray arr;
     arr.resize(2);
     port->flushReadCache();
-    //port->flushReadCache();
     while(m>0){
         arr[0] = 0xA5;
         arr[1] = 0xAD;
        bool isOk = port->sendInfo(arr.data(),2);
        if(!isOk){
-           qDebug() << "sendinfo false";
-            flag = false;
+           flag = false;
            return;
         }
 
         int remainsize = TemperatureValueSize ;
-       // midTime = QDateTime::currentMSecsSinceEpoch();
-        //qDebug() << "midTime:" << midTime- startTime;
-       // startTime = midTime;
-        qDebug() << "§Ö";
-       // int pos;
+
         if(HDTimer::getCurrentTimeMisc() - startTime >timeout){
-            qWarning() << "";
              flag = false;
             return ;
         }
-        qDebug() << "wait before";
-        while(remainsize >0 || HDTimer::getCurrentTimeMisc() - startTime <timeout){
 
+        while(remainsize >0 || HDTimer::getCurrentTimeMisc() - startTime <timeout){
             int size = port->bytesAvailable();
-            qDebug() << "size:" << size;
             if (size ==0){
                 qint64 startTi = QDateTime::currentMSecsSinceEpoch();
                if(!port->bytesAvailable()){
@@ -77,12 +61,7 @@ void  TempCalibrt::getTempValue(float& temp,bool &flag,int timeout){
 
             QByteArray  a_tmp = port->readAll();
             int len = a_tmp.length();
-            qDebug() << "len:" << len<< "buffer:" << a_tmp.toHex();
-            qDebug() << "index:" << TemperatureValueSize- remainsize;
             memcpy(buf+TemperatureValueSize- remainsize,a_tmp.data(),len);
-
-            qDebug() <<"buf:" <<  QByteArray(buf).toHex();
-           // buf.append(a_tmp);
             if(a_tmp.contains(0x0D)){
                 buf[TemperatureValueSize- remainsize+len] = '\0';
                 goto end;
@@ -90,40 +69,19 @@ void  TempCalibrt::getTempValue(float& temp,bool &flag,int timeout){
             remainsize -= len;
         }
         end:
-      //  endTime = QDateTime::currentMSecsSinceEpoch();
-     //   qDebug() << "endTime:" << endTime - midTime;
-        qDebug() << "buf:" << buf;
+
         string str(buf);
         int32_t index = str.find("TEMP");
         if(index == -1){
-            qDebug() << "¦Ä";
             continue;
         }
         m--;
        int  temValue = atoi(str.substr(index+6).c_str());
-        qDebug() <<  "temValueStr:" <<temValue;
-
         tempAll += temValue;
     }
-    qDebug() << "";
     temp = (1.0* tempAll) / (maxSize* 100);
      flag = true;
     return ;
-//    if(!isStart){
-//        qDebug() << ":" << temp;
-//        isStart = true;
-//        referValue = tempAll/(maxSize);
-//        return;
-//    }
-//    qDebug() << "temp:" << tempAll/1 << ",referValue:" << referValue;
-//    int result = tempAll/maxSize- referValue;
-//    qDebug() << ":" << result;
-//   // emit  setTemperatureSignal(temp);
-//    if(result >TemperatureDiff){
-//        qDebug() << ":" << tempAll/maxSize;
-//        referValue =tempAll/(maxSize);
-//        emit parseScanDataSignal();
-//    }
 
 }
 
@@ -139,10 +97,8 @@ void  TempCalibrt::parseDataHeader(bool &flag,int timeout){
         qDebug() << "";
         int remain = PackageDataHeaderLen -pos;
         if(timeout == -1){
-            //isOk =
             isOk = port->waitForData(remain,timeout);
         }else{
-            //isOk =
             isOk = port->waitForData(remain,timeout - HDTimer::getCurrentTimeMisc()+startTime);
         }
 
@@ -150,9 +106,7 @@ void  TempCalibrt::parseDataHeader(bool &flag,int timeout){
             flag = false;
             return;
         }
-        qDebug() << "";
         QByteArray tmp = port->read(qint64(remain));
-        qDebug() <<"buf_hex:" << tmp.toHex();
 
         for(int i = 0;i <tmp.length();i++){
             switch (pos) {
@@ -190,8 +144,6 @@ void  TempCalibrt::parseDataHeader(bool &flag,int timeout){
                 firstAngle += (uint8_t(tmp[i])) * 0x100;
                 CheckSumCal ^= firstAngle;
                 pos++;
-               // //qDebug("Header CheckCal:%x",CheckSumCal);
-                ////qDebug(":%x",firstAngle);
                 break;
             case 6:
                 lastAngle = uint8_t(tmp[i]);
@@ -211,15 +163,12 @@ void  TempCalibrt::parseDataHeader(bool &flag,int timeout){
                 pos++;
                 break;
             default:
-                //qDebug() << ":" << uint8_t(tmp[i]);
                 continue;
             }
             ar[pos-1] = tmp[i];
 
         }
-        qDebug() << "header_array:" << ar.toHex();
         if (pos == 10){
-            qDebug() << "!";
             flag = true;
            return;
         }
@@ -242,7 +191,6 @@ void TempCalibrt::startDistanceScan(float& distance,float& standDevit){
     bool isOk = true;
     sendInfo(isOk,arr.data(),2);
     if(!isOk){
-        qDebug() << "";
         return;
     }
     start:
@@ -251,70 +199,51 @@ void TempCalibrt::startDistanceScan(float& distance,float& standDevit){
     while(m>0){
         bool ans = false;
         parseDataHeader(ans);
-          qDebug() << "";
           if (!ans){
               stopScanDistance();
-              qDebug() << ",!";
               return;
           }
 
-         // ans = true;
           ans = port->waitForData(waitSize, -1); //5s,
           if (ans == false){
               stopScanDistance();
-              qDebug() << "";
               return;
           }
 
           qint64 Maxlen = port->read(scanData,waitSize);
-          qDebug() << "read_size_data:" << Maxlen;
           if(Maxlen != waitSize){
-              qDebug() << "numbers of read bytes is wrong";
               continue;
           }
           ans = caculateCheckSum(scanData,waitSize);
           if (!ans){
-              qDebug() << "§µ";
               continue;
           }
           QByteArray arr;
-          arr.resize(1000);
-          arr.clear();
-          qDebug() << "m:" << m << ",vec_size:" << vec_distance.size();
           int32_t sumA= 0;
           for(int i=0;i<waitSize;i=i+4){
               arr.append(scanData[i+2]);
               arr.append(scanData[i+3]);
               vec_distance.push_back((uint8_t)scanData[i+2] *1 + 16*16*scanData[i+3]);
               sumA += scanData[i+2] *1 + scanData[i+3] * 16*16;
-             // qDebug() << "data1:" << (uint8_t)scanData[i+2] *16 << ",data3:" << (int)scanData[i+3];
-           //   qDebug() << "every data:" << (uint8_t)scanData[i+2] *1 + 1*scanData[i+3] ;
           }
-          //qDebug() << "sumA" << sumA;
-          qDebug() << "arr.size:" << arr.size()<<"distance hex:" <<arr.toHex();
           m--;
     }
-    //float  dis , devit;
+
     calcuteDistance(vec_distance,distance,standDevit);
-    qDebug() << "test1";
     if(standDevit >= MaxStandardDevitation){
-        qDebug() <<"test2";
         qWarning() << QString("%1,%2").arg(standDevit).arg(MaxStandardDevitation);
         goto start;
     }
-    qDebug() << "test3";
     stopScanDistance();
     return;
 }
 
 void TempCalibrt::stopScanDistance(){
-    qDebug() << "test4";
     QByteArray  arr;
     arr.resize(2);
     arr[0] = 0xa5;
     arr[1] = 0x65;
     port->sendInfo(arr.data(),2);
-    qDebug() << "test5";
     port->flushReadCache();
 }
 
@@ -331,7 +260,6 @@ bool  TempCalibrt::caculateCheckSum(char *scanData,const int num){
         }
     }
     if(CheckSumCal == CheckSum){
-        qDebug() << "§µ";
         return true;
     }
     return false;
@@ -346,16 +274,13 @@ void  TempCalibrt::calcuteDistance(vector<int32_t> &vec_distance,float &distance
     for(size_t i=0;i<vec_distance.size();i++){
         sum += vec_distance[i];
     }
-    qDebug() << "sum:" << sum  <<",vec_size:" << vec_distance.size();
     avg = sum / vec_distance.size();
     for(size_t i=0;i<vec_distance.size();i++){
         div += (vec_distance[i] - avg) * (vec_distance[i] - avg);
     }
-   // div /= vec_distance.size();
-    qDebug() <<"div:" <<div;
+
     deviation = (sqrt(div*1.0 / vec_distance.size()));
     distance = (sum *1.0)/ (1.0*vec_distance.size()); //15.56
-    qDebug() << "avg:" << avg << " ,deviation:" << deviation;
 }
 
 
@@ -364,14 +289,10 @@ void  TempCalibrt::open(bool &flag, int baudrate,QString portName, \
                             int  dataBit, \
                             int StopBit, \
                         int controlBit ,int checkBit ){
-  qDebug() << "tempCalibrt_open_thread" << QThread::currentThread();
-  //port = port->GetInstance();
   flag =  port->open(baudrate,portName,dirctions,dataBit,StopBit,controlBit,checkBit);
     return ;
 }
 void TempCalibrt::close(){
-    qDebug() << "";
-   // port = myport::MySeriaPort::GetInstance();
     port->close();
 }
 
@@ -392,23 +313,14 @@ void  TempCalibrt::waitForData(bool &flag,int &count,const int timeout){
 }
 
 void TempCalibrt::getPortnameList(QStringList& qlist){
-    qDebug() << "§Ò";
-    qDebug() << "idmove:" << QThread::currentThread();
-
    port->getPortnameList(qlist);
-   return;//   true;
 }
 
 
 void  TempCalibrt::getOpenStatus(bool &flag){
-    qDebug() << "getOpenStatus_start";
-  //  port = myport::MySeriaPort::GetInstance();
     bool isOk = port->isOpen();
     flag = isOk;
-    qDebug() << "getOpenStatus_end";
-    return;
 }
 void  TempCalibrt::getValidSize(int &size){
-  //  port = myport::MySeriaPort::GetInstance();
     size = port->bytesAvailable();
 }

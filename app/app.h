@@ -16,7 +16,6 @@ QT_END_NAMESPACE
 class App : public QMainWindow
 {
     Q_OBJECT
-
 public:
     App(QWidget *parent = nullptr);
     ~App();
@@ -43,6 +42,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *);
     void keyPressEvent(QKeyEvent *event);
     void paintEvent(QPaintEvent *);
+    void closeEvent(QCloseEvent *event);
 
 private:
     Ui::App *ui;

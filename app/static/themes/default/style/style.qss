@@ -345,6 +345,12 @@ QPushButton[accessibleName="primary"] {
     color: @color07;
 }
 
+QPushButton:disabled {
+    padding: 7 25;
+    background-color: #075fbb;
+    color: @color07;
+}
+
 QPushButton[accessibleName="primary"]:hover {
     background-color: @color10;
 }

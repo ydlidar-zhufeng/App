@@ -33,24 +33,25 @@ struct _Tof_point{
         this->peak_avg = point.peak_avg;
         this->peak_max = point.peak_max;
         this->peak_min = point.peak_min;
+        this->tof_deviation = point.tof_deviation;
         return  *this;
     }
 };
 
 typedef struct
 {
- int tof_max;
- int tof_min;
- int peak_max;
- int peak_min;
- int line_k;
- int line_b;
- int weight;//权重 交叉区间最大值 减 最小值
+ int32_t tof_max;
+ int32_t tof_min;
+ int32_t peak_max;
+ int32_t peak_min;
+ int32_t line_k;
+ int32_t line_b;
+ //int weight;//权重 交叉区间最大值 减 最小值
 }Tof_Para_Type;
 
 struct array_modulus{
-  double  modulus;
-  double  deviation;
+  double  k;
+  double  b;
 };
 
 namespace HDTimer {
@@ -75,6 +76,17 @@ static inline uint16_t CRC16_MODBUS(uint8_t *p, uint32_t dlen)
         }
     }
     return CRC_Temp;
+}
+
+inline QString ByteArrayToHexString(QByteArray data){
+    QString ret(data.toHex().toUpper());//转为16进制大写
+    int len = ret.length()/2;
+    ret.insert(0,"0x");
+    for(int i=1;i<len;i++)
+    {
+        ret.insert(4*i+i-1,",0x");//编写格式
+    }
+    return ret;
 }
 }
 

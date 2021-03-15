@@ -32,6 +32,8 @@ public:
     void flushReadCache();
     bool waitForData(int &count,const int timeout = -1);
     void   getPortnameList(QStringList& qlist);
+signals:
+    void addLog(QString &txt);
 
 private:
     MySeriaPort *port_;

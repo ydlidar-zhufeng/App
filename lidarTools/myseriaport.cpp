@@ -7,65 +7,47 @@
 
 namespace myport {
 
-//MySeriaPort* MySeriaPort::port_ = nullptr;
-
-
 MySeriaPort::MySeriaPort()
 {
     port_ = this;
     qRegisterMetaType<QStringList>("QStringList");
     qRegisterMetaType<QStringList>("QStringList&");
+    qRegisterMetaType<QString>("QString&");
     init();
 }
 
 MySeriaPort::~MySeriaPort(){
-    //MySeriaPort * port = GetInstance();
-    //delete this;
+    delete  this;
 }
 
 void MySeriaPort::init(){
-//    connect(this,&MySeriaPort::sig_open,this,&MySeriaPort::open,Qt::DirectConnection);
-//    connect(this,&MySeriaPort::sig_close,this,&MySeriaPort::close,Qt::DirectConnection);
-//    connect(this,&MySeriaPort::sig_sendInfo,this,&MySeriaPort::sendInfo,Qt::DirectConnection);
-//    connect(this,&MySeriaPort::sig_flushReadCache,this,&MySeriaPort::flushReadCache,Qt::DirectConnection);
-//    connect(this,&MySeriaPort::sig_waitForData,this,&MySeriaPort::waitForData,Qt::DirectConnection);
-//    connect(this,&MySeriaPort::sig_getPortnameList,this,&MySeriaPort::getPortnameList,Qt::DirectConnection);
+
 }
 
 void  MySeriaPort::getPortnameList(QStringList& qlist){
-  //  QStringList portList;
-    //QStringList qlist;
-    qDebug() << "getPortnameList";
     for(QSerialPortInfo &info:QSerialPortInfo::availablePorts()){
         qlist << info.portName();
     }
-  //  str = qlist[0];
-    return ;// portList;
+    return ;
 }
 
 bool  MySeriaPort::open(const int baudrate,QString portName,
                            int dirctions,int  dataBit,int StopBit,
                              int controlBit,int checkBit){
-    qDebug() << "myserialport thread:" <<QThread::currentThreadId();
-   // MySeriaPort * port = GetInstance();
     if (this->isOpen()){
-        qDebug() << "关闭上个端口";
+        qDebug() << "close last port";
         this->close();
-       // delete port;
     }
     //目前只设置支持一个窗口
     this->setPortName(portName);
      qDebug() << "portname:" << portName << ",baudrate:" << baudrate;
 
 
-    qDebug() << "打开前";
-    qDebug() << "此处";
 
     if(!this->QSerialPort::open(QIODevice::ReadWrite))//用ReadWrite 的模式尝试打开串口
     {
         qCritical() << "open port failed!";
-        qDebug()<<portName<<"打开失败!";
-        delete this;
+       // delete this;
         return false;
     }
 
@@ -74,20 +56,18 @@ bool  MySeriaPort::open(const int baudrate,QString portName,
     this->setFlowControl(QSerialPort::NoFlowControl);//无流控制
     this->setParity(QSerialPort::NoParity);	//无校验位
     this->setStopBits(QSerialPort::OneStop); //一位停止位
-    qDebug() << "打开成功";
+    qDebug() << "open port success";
 
     return true;
 }
 
 void MySeriaPort::flushReadCache(){
-   // MySeriaPort * port = GetInstance();
     this->QSerialPort::readAll();
 }
 
 void MySeriaPort::close(){
     MySeriaPort * port = GetInstance();
     port->QSerialPort::close();
-    delete  port;
 }
 
 bool MySeriaPort::waitForData(int &count,const int timeout){
@@ -104,11 +84,8 @@ bool MySeriaPort::waitForData(int &count,const int timeout){
    while(HDTimer::getCurrentTimeMisc()- startTime < (long long)timeout || timeout == -1) {
 
        this->waitForReadyRead(timeout);
-
        asize = this->bytesAvailable();
-       qDebug() << "等待点2";
        if (asize >= count){
-           qDebug() << "成功等待";
            return true;
        }
    }
@@ -120,19 +97,22 @@ bool MySeriaPort::waitForData(int &count,const int timeout){
 
 
 bool MySeriaPort::sendInfo(char* cmd,const int len){
-    qDebug() << "端口线程：" << QThread::currentThreadId();
-  //  MySeriaPort * port = GetInstance();
+
     if(!this->isOpen()){
         qDebug() << "port is not open!";
         qCritical() << "port is not open!";
     }
+
+    QByteArray  arr;
+    arr.resize(len);
+    memcpy(arr.data(),cmd,len);
+    QString txt = QString("%1").arg(QString(arr.toHex()));
+    qDebug() << "send data cmd:" << arr.toHex()<<cmd;
     this->flush();
-    //port->flushReadCache();
-    qDebug() << QString("发送指令为:") << QByteArray(cmd).toHex();
+
     qint64 size = this->write(cmd,len);
-    qDebug() << "返回写入结果";
     if (size!= len){
-        qWarning() << QString("写入字节数错误");
+        qWarning() << QString("write dtr serial data'size failed,cur size:%1,true size: %2").arg(size).arg(len);
         return false;
     }
 //    int err = port->error();

@@ -38,6 +38,7 @@ public slots:
                                 int StopBit =QSerialPort::OneStop,
                                 int controlBit =QSerialPort::NoFlowControl,int checkBit = QSerialPort::NoParity);
     void close();
+    void getData(QByteArray &data);
     void testConnect(bool &flag);
 
     void  sendInfo(bool &flag,char* cmd,const int len);
@@ -47,12 +48,9 @@ public slots:
 
     void  getOpenStatus(bool &flag);
     void  getValidSize(int &size);
+    void  slot_add_log(QString &txt);
 signals:
-    void  sig_tof_open(bool &flag,int baudrate,QString portName,
-                                int dirctions = QSerialPort::AllDirections,
-                                int  dataBit =QSerialPort::Data8,
-                                int StopBit =QSerialPort::OneStop,
-                                int controlBit =QSerialPort::NoFlowControl,int checkBit = QSerialPort::NoParity);
+    void addLog(QString& txt);
 
 private:
     void init();

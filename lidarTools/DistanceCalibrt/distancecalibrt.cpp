@@ -1,6 +1,7 @@
 ﻿#include "distancecalibrt.h"
 #include <QDebug>
 #include <math.h>
+#include <QByteArray>
 
 using namespace  std;
 
@@ -20,7 +21,6 @@ DistanceCalibrt::~DistanceCalibrt(){
 }
 
 void DistanceCalibrt::init(){
-
 }
 
 
@@ -256,20 +256,36 @@ void  DistanceCalibrt::open(bool &flag, int baudrate,QString portName, \
                             int  dataBit, \
                             int StopBit, \
                         int controlBit ,int checkBit ){
-    qDebug() << "距离开始打开";
   qDebug() << "DistanceCalibrt open func:" << QThread::currentThread();
   port  = new myport::MySeriaPort;
   flag =  port->open(baudrate,portName,dirctions,dataBit,StopBit,controlBit,checkBit);
-    return ;
+  connect(port,SIGNAL(addLog(QString&)),this,SLOT(slot_add_log(QString&)));
+  return ;
 }
 void DistanceCalibrt::close(){
     qDebug() << "开始关闭";
     port->close();
 }
 
+void DistanceCalibrt::getData(QByteArray &data){
+    qDebug() << "getData";
+    QThread::msleep(500);
+    data.clear();
+    data.append(port->readAll().toHex());
+    QString str = QString::fromLocal8Bit("receive data:\n%1").arg(QString(data));
+    emit addLog(str);
+}
+
 void DistanceCalibrt::sendInfo(bool &flag,char* cmd,const int len){
+    QString txt = QString("发送命令:%1").arg(QString(QByteArray(cmd).toHex()));
+    qDebug() << "send data cmd:" << txt;
+   // emit addLog(txt);
    flag = port->sendInfo(cmd,len);
    return;
+}
+
+void DistanceCalibrt::slot_add_log(QString &txt){
+    emit addLog(txt);
 }
 
 void DistanceCalibrt::flushReadCache(){
@@ -305,10 +321,14 @@ void  DistanceCalibrt::getValidSize(int &size){
 void  DistanceCalibrt::testConnect(bool &flag){
    flag = false;
    QByteArray arr;
-   arr.resize(2);
+   arr.resize(6);
    arr[0] = 0xa5;
-   arr[1] = 0xda;
-   bool isOk = port->sendInfo(arr.data(),2);
+   arr[1] = 0xf0;
+   arr[2] = 0xa5;
+   arr[3] = 0xf0;
+   arr[4] = 0xa5;
+   arr[5] = 0xf0;
+   bool isOk = port->sendInfo(arr.data(),6);
    if(!isOk){
        qWarning() << QString("发送指令%1失败").arg(arr.data());
        return;

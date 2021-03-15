@@ -17,12 +17,28 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += -static
 
 #LIBS += -L$$PWD\lib -llidarTools
-LIBS += -L$$PWD\lib -llidarTools
+LIBS += -L$$PWD\lib -llidarTools -lejson
+
+#--------------------------------------------------------------------------------------------
+#编译目录配置
+UI_DIR      = $$OUT_PWD/UI
+MOC_DIR     = $$OUT_PWD/MOC
+RCC_DIR     = $$OUT_PWD/RES
+OBJECTS_DIR = $$OUT_PWD/OBJ
+
 INCLUDEPATH += $$PWD\..\lidarTools \
-#DEPENDPATH += $$PWD\..\lidarTools \
+
 
 INCLUDEPATH += \
-    $$PWD\..\3rdParty\eigen-3.3.7
+    $$PWD\..\3rdParty\eigen-3.3.7 \
+    $$PWD\..\3rdParty\ejson\include \
+    $$PWD\..\3rdParty\ejson\
+
+DEPENDPATH += $$PWD\..\3rdParty\ejson\src
+
+
+
+
 win32{
 #LIBS +=-L$$PWD\lib -llidarTools
 }
@@ -30,6 +46,7 @@ SOURCES += \
     CustomPlotTooltip.cpp \
     Managers/app_manager.cpp \
     feedback.cpp \
+    global.cpp \
     main.cpp \
     app.cpp \
     newcombobox.cpp \
@@ -46,6 +63,7 @@ HEADERS += \
     Managers/app_manager.h \
     app.h \
     feedback.h \
+    global.h \
     newcombobox.h \
     pages/TempSensor/temp_custom_display.h \
     pages/TempSensor/temp_sensor_page.h \
@@ -73,3 +91,9 @@ include(../3rdParty/qtxlsx/src/xlsx/qtxlsx.pri)
 
 RESOURCES += \
     static.qrc
+
+
+
+INCLUDEPATH += $$PWD/.
+DEPENDPATH += $$PWD/.
+

@@ -21,9 +21,9 @@ App::App(QWidget *parent)
     ui->setupUi(this);
     mousePressed = false;
     qRegisterMetaType<bool>("bool&");
-    qDebug() << "app_thread:" << QThread::currentThread();
     init();
-   // test1();
+
+
 }
 
 App::~App()
@@ -32,13 +32,7 @@ App::~App()
 }
 
 void App::test1(){
-   // cal = new TempCalibrt;
-    //cal->port = cal->GetInstance();
-    //    myport::MySeriaPort *port = myport::MySeriaPort::GetInstance();
-    //    cal = new TempCalibrt(port);
-    //    qDebug() << cal->getPortnameList();
-  //  cal->port = cal->port->GetInstance();
-  //  cal->getPortnameList();
+
 }
 
 void App::init(){
@@ -80,6 +74,7 @@ void App::init(){
     menuLayout->addWidget(maxBnt);
     menuLayout->addWidget(cloBnt);
     ui->menu_widget->setLayout(menuLayout);
+    ui->menu_widget->setStyleSheet("background:#D1EEEE");
    // bodyLayout->addWidget(menuWidget);
 
 
@@ -196,9 +191,7 @@ void App::minMenuBntClicked()
 
 void App::closeMenuBntClicked()
 {
-    tofCalibrtPage->emitClose();
     close();
-
 }
 
 
@@ -303,5 +296,9 @@ void App::paintEvent(QPaintEvent *)
         painter.setPen(color);
         painter.drawPath(path);
     }
+}
+
+void App::closeEvent(QCloseEvent *event){
+    emit tofCalibrtPage->sig_exit_thread();
 }
 

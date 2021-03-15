@@ -86,9 +86,6 @@ void TempSensorPage::initConnect(){
     connect(this,&TempSensorPage::sig_getValidSize,p_tempcalibrt,&TempCalibrt::getValidSize,Qt::BlockingQueuedConnection);
     connect(this,&TempSensorPage::sig_getOpenStatus,p_tempcalibrt,&TempCalibrt::getOpenStatus,Qt::BlockingQueuedConnection);
 
-    connect(this,SIGNAL(destroyed()),this,SLOT(slot_destroyed()),Qt::DirectConnection);
-    connect(this,SIGNAL(close()),this,SLOT(slot_destroyed()),Qt::DirectConnection);
-   // this->close();
     this->showMaximized();
 
     connect(tempCustomDisplay,SIGNAL(sig_modulus_clicked()),this,SLOT(slot_modulus_clicked()),Qt::DirectConnection);
@@ -100,9 +97,6 @@ void TempSensorPage::initConnect(){
     tempSensorSettings->setCombPortName(qlist);
 }
 
-void TempSensorPage::slot_destroyed(){
-  qDebug() << "开始销毁对象";
-}
 
 void TempSensorPage::clear_vector(){
     vec_devit.clear();
