@@ -19,7 +19,7 @@
 #include <QJsonValue>
 #include <QJsonDocument>
 #include <QJsonParseError>
-#include <QJsonObject>
+
 using namespace Eigen;
 using namespace EasyJson;
 
@@ -142,9 +142,7 @@ void tof_calibrt::initConnect(){
 }
 
 void tof_calibrt::slot_add_log(QString& txt){
-    qDebug() << "into gaicao";
-    // ui->logedit->append(txt);
-    //repaint();
+
 }
 
 void tof_calibrt::slot_exit_thread(){
@@ -1266,7 +1264,7 @@ void tof_calibrt::GetDtrParm()
     uint8_t device_number = DTR_CMD_DEVICE_NUM;
     uint8_t func_code;
 
-    //读步距角和xifen
+    //读步距角和细分
     read_register  sing_addr_read;
     uint8_t* pHeader = reinterpret_cast<uint8_t *>(&sing_addr_read.device_number);
     func_code = READ_REGISTER_FUNC_CODE;
