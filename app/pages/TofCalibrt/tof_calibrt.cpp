@@ -92,8 +92,8 @@ void tof_calibrt::init(){
     m_pDtrmodel = new QStandardItemModel(ui->tableViewDtr);
 
     /*设置列数*/
-    m_pDtrmodel->setColumnCount(3);
-    m_pDtrmodel->setHorizontalHeaderLabels(QStringList()  << QString("距离") << QString("速度") << QString("方向(正0,反1)"));
+    m_pDtrmodel->setColumnCount(4);
+    m_pDtrmodel->setHorizontalHeaderLabels(QStringList()  << QString("距离") << QString("速度") << QString("方向(正0,反1)") << QString("坐标"));
     ui->tableViewDtr->verticalHeader()->setVisible(false);
     ui->tableViewDtr->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableViewDtr->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -102,7 +102,6 @@ void tof_calibrt::init(){
     ui->combbaudrate->setCurrentIndex(3);
     ui->combdtrbaudrate->setCurrentIndex(1);
     ui->checkBox->setCheckState(Qt::Checked);
-
 }
 
 void tof_calibrt::initConnect(){
@@ -838,11 +837,25 @@ void tof_calibrt::on_btnOnceRun_clicked()
     emit sig_btn_once_run();
     //读起始坐标
     read_current_pos(ui->lineStartingPos);
+    int startPos = ui->lineStartingPos->text().toInt();
     int  dis = ui->lineDistance->text().toFloat() * 100;
     int speech = ui->lineSpeech->text().toInt();
-    int  direction = ui->checkBox->checkState()/2;//正转为2，反转为0
+    int  direction = (ui->checkBox->checkState()) ? 0:1;//正转为2，反转为0
 
     dtr_once_cal(dis,speech,direction);
+    int CurPos = ui->lineCurrentPos->text().toInt();
+    int diff = (CurPos - startPos);
+    if(direction){
+        diff = - diff;
+    }
+    if(fabs(diff  - (dis /100)) >=3){
+        QMessageBox::warning(this,QString("电机坐标有误"),QString("起始坐标:%1,结束坐标:%2,设定运行距离:%3,相差:%4,大于最大误差3!").arg(startPos).arg(CurPos).arg(dis /100.0).arg(diff),QMessageBox::Cancel);
+        return;
+    }
+
+    qApp->processEvents();
+    //getOncePointData();
+    qApp->processEvents();
 }
 
 
@@ -859,7 +872,7 @@ void tof_calibrt::dtr_once_cal(int dis,int speech,int direction){
     multp_addr.data[0] = htou16(speech);
     multp_addr.data[1] = htou16((uint16_t)dis & 0xffff);
     multp_addr.data[2] = htou16(dis >> 16);
-    multp_addr.data[3] = htou16(direction ? 0:1);
+    multp_addr.data[3] = htou16(direction);
     multp_addr.crc = pubFunc::CRC16_MODBUS(pHeader,sizeof(multp_addr) - 2);
 
     bool flag = write_four_register(multp_addr);
@@ -885,7 +898,7 @@ void tof_calibrt::dtr_once_cal(int dis,int speech,int direction){
     }
 
     //读当前坐标
-    QThread::msleep(1000);
+    QThread::msleep(2000);
     read_current_pos(ui->lineCurrentPos);
     //    getOncePointData();
 
@@ -1005,12 +1018,38 @@ void tof_calibrt::on_btnAllRun_clicked()
     int dis;
     int speech;
     read_current_pos(ui->lineStartingPos);
+    m_pDtrmodel->horizontalHeaderItem(3)->setText(QString("起始:%1").arg(ui->lineStartingPos->text()));
+    int startPos = ui->lineStartingPos->text().toInt();
     int direction;
+    int CurPos ;
+    int diff;
     for(int i=0;i<row;i++){
         dis = m_pDtrmodel->item(i,0)->text().toFloat() * 100;
         speech =m_pDtrmodel->item(i,1)->text().toInt();
         direction = m_pDtrmodel->item(i,2)->text().toInt();//正转为0，反转为1;
         dtr_once_cal(dis,speech,direction);
+        qApp->processEvents();
+        CurPos = ui->lineCurrentPos->text().toInt();
+        m_pDtrmodel->setItem(i,3,new QStandardItem(QString("%1").arg(CurPos)));
+
+        m_pDtrmodel->item(i,3)->setTextAlignment(Qt::AlignCenter);
+        diff = (CurPos - startPos);
+        if(direction){
+            diff = - diff;
+        }
+        if(fabs(diff  - (dis /100)) >=3){
+            QMessageBox::warning(this,QString("电机坐标有误"),QString("[行%5] 起始坐标:%1,结束坐标:%2,设定运行距离:%3,相差:%4,大于最大误差3!").arg(startPos).arg(CurPos).arg(dis /100.0).arg(diff).arg(i),QMessageBox::Cancel);
+            m_pDtrmodel->item(i,0)->setBackground(QBrush(QColor("#55ff0000")));
+            m_pDtrmodel->item(i,1)->setBackground(QBrush(QColor("#55ff0000")));
+            m_pDtrmodel->item(i,2)->setBackground(QBrush(QColor("#55ff0000")));
+            m_pDtrmodel->item(i,3)->setBackground(QBrush(QColor("#55ff0000")));
+            return;
+        }
+        read_current_pos(ui->lineStartingPos);
+        startPos = ui->lineStartingPos->text().toInt();
+
+        qApp->processEvents();
+     //   getOncePointData();
         qApp->processEvents();
     }
 }
@@ -1464,7 +1503,7 @@ void tof_calibrt::saveConfig(){
     }
 
     QJsonArray arr;
-    for(int i=0;i<row;i++){
+    for(int i=row-1;i>=0;i--){
         QJsonArray arr1;
         arr1.append(m_pDtrmodel->item(i,0)->text().toFloat()); //距离
         arr1.append(m_pDtrmodel->item(i,1)->text().toInt());   //速度
