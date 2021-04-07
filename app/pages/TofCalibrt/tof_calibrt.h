@@ -10,6 +10,7 @@
 #include <QStandardItemModel>
 #include <global.h>
 #include <QLineEdit>
+#include <QTimer>
 #if _MSC_VER >= 1600
 #pragma execution_character_set("utf-8")
 #endif
@@ -80,6 +81,8 @@ private slots:
 public slots:
     void slot_exit_thread();
     void slot_btn_once_run();
+    void slot_check_setZeroStatus();
+    void slot_dtr_readyRead();
 
 signals:
     void  sig_tof_open(bool &flag,int baudrate,QString portName,
@@ -147,6 +150,10 @@ private:
     QFont      *logFont;
     Tof_Para_Type tof_para[6];
     QStandardItemModel *m_pDtrmodel;
+    QTimer  *m_read_timer;
+
+    int  timeoutCount = 0;
+    bool setZeroStatus = false;
 };
 
 #endif // TOF_CALIBRT_H

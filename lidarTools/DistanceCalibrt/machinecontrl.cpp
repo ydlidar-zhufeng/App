@@ -19,6 +19,7 @@ void machineContrl::open(bool &flag,int baudrate,QString portName,
     qDebug() << "machinecontrol open func:" << QThread::currentThread();
     port = new myport::MySeriaPort;
     flag = port->open(baudrate,portName,dirctions,dataBit,StopBit,controlBit,checkBit);
+    connect(port,&myport::MySeriaPort::readyRead,this,&machineContrl::slot_readyRead);
 }
 
 void  machineContrl::sendInfo(bool &flag, char *cmd, int len){
@@ -26,8 +27,13 @@ void  machineContrl::sendInfo(bool &flag, char *cmd, int len){
     return;
 }
 
+void  machineContrl::slot_readyRead(){
+    emit readyData();
+}
+
 void  machineContrl::close(){
     port->close();
+    disconnect(port,&myport::MySeriaPort::readyRead,this,&machineContrl::slot_readyRead);
 }
 
 void machineContrl::testConnect(bool &flag){

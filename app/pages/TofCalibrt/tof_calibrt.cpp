@@ -45,6 +45,10 @@ tof_calibrt::tof_calibrt(QWidget *parent):
 tof_calibrt::~tof_calibrt()
 {
     delete ui;
+    if (m_read_timer != nullptr) {
+      delete m_read_timer;
+      m_read_timer = nullptr;
+    }
 }
 
 
@@ -102,6 +106,27 @@ void tof_calibrt::init(){
     ui->combbaudrate->setCurrentIndex(3);
     ui->combdtrbaudrate->setCurrentIndex(1);
     ui->checkBox->setCheckState(Qt::Checked);
+
+    if (m_read_timer == nullptr) {
+      m_read_timer = new QTimer();
+      connect(m_read_timer,&QTimer::timeout,this,&tof_calibrt::slot_check_setZeroStatus);
+    }
+}
+
+void tof_calibrt::slot_check_setZeroStatus(){
+    if(setZeroStatus){
+        setZeroStatus = false;
+        return;
+    }
+    qDebug() << "slot_check_setZeroStatus";
+    if(timeoutCount > 5){
+        disconnect(m_read_timer,&QTimer::timeout,this,&tof_calibrt::slot_check_setZeroStatus);
+        m_read_timer->stop();
+        timeoutCount = 0;
+        qDebug() << "运转到零位完成";
+    }
+
+
 }
 
 void tof_calibrt::initConnect(){
@@ -138,6 +163,14 @@ void tof_calibrt::initConnect(){
     connect(this,&tof_calibrt::sig_dtr_testConnect,p_machiCtl,&machineContrl::testConnect,Qt::BlockingQueuedConnection);
     connect(this,&tof_calibrt::sig_dtr_readData,p_machiCtl,&machineContrl::readData,Qt::BlockingQueuedConnection);
     connect(this,&tof_calibrt::sig_btn_once_run,this,&tof_calibrt::slot_btn_once_run);
+    connect(p_machiCtl,&machineContrl::readyData,this,&tof_calibrt::slot_dtr_readyRead);
+}
+
+void tof_calibrt::slot_dtr_readyRead(){
+    setZeroStatus = true;
+    if(timeoutCount){
+        timeoutCount = 0;
+    }
 }
 
 void tof_calibrt::slot_add_log(QString& txt){
@@ -1052,6 +1085,18 @@ void tof_calibrt::on_btnAllRun_clicked()
      //   getOncePointData();
         qApp->processEvents();
     }
+
+    //全部标定完后，需要返回零位
+    if(Qt::Checked ==  ui->checkBoxAutoZero->checkState()){
+        on_btnReturnZeroPos_clicked();
+        QThread::msleep(2000);
+        read_current_pos(ui->lineCurrentPos);
+        CurPos = ui->lineCurrentPos->text().toInt();
+        if(0 != CurPos){
+            QMessageBox::warning(this,tr("电机回零位失败"),tr("当前坐标为%1").arg(CurPos),QMessageBox::Cancel);
+        }
+    }
+
 }
 
 bool tof_calibrt::read_four_register_func(read_register& addr,uint16_t* data_arr){
@@ -1439,6 +1484,13 @@ void tof_calibrt::loadConfig(){
         ui->checkBox->setCheckState(Qt::Unchecked);
         ui->checkBox->setText("反转");
     }
+
+    if(settings.value("autoSetZero").toBool()){
+        ui->checkBoxAutoZero->setCheckState(Qt::Checked);
+    }else {
+        ui->checkBoxAutoZero->setCheckState(Qt::Unchecked);
+    }
+
     settings.endGroup();
     QString jsonPath = QDir::currentPath() + "/dtr_config.json";
 
@@ -1495,6 +1547,13 @@ void tof_calibrt::saveConfig(){
     settings.setValue("direction",ck);
     settings.setValue("forwardStartSignal",ui->lineforwardSignal->text().toInt());
     settings.setValue("backStartSignal",ui->lineBackSignal->text().toInt());
+
+    if(Qt::Checked == ui->checkBoxAutoZero->checkState()){
+        settings.setValue("autoSetZero",true);
+    }else {
+        settings.setValue("autoSetZero",false);
+    }
+
     settings.endGroup();
 
     int row = ui->tableViewDtr->model()->rowCount();
@@ -1614,6 +1673,9 @@ void tof_calibrt::on_btnReturnZeroPos_clicked()
         QMessageBox::warning(this,QString("配置失败"),QString("电机停止失败"),QMessageBox::Cancel);
         return;
     }
+
+    m_read_timer->start(100);
+
 }
 
 

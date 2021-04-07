@@ -4,10 +4,13 @@
 #include "myseriaport.h"
 class machineContrl:public QObject
 {
+    Q_OBJECT
 public:
 
     machineContrl(QObject *parent = nullptr);
     ~machineContrl();
+signals:
+    void readyData();
 public slots:
     void   open(bool &flag,int baudrate,QString portName,
                                 int dirctions = QSerialPort::AllDirections,
@@ -21,6 +24,7 @@ public slots:
     void testConnect(bool &flag);
    // void waitForData(bool &flag,int count,int timeout);
     void readData(bool& flag,int count,int timeout,QByteArray& arr);
+    void slot_readyRead();
 private:
     myport::MySeriaPort * port;
 };
