@@ -3,7 +3,9 @@ QT       += serialport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
-
+CONFIG += console
+DEFINES += QT_DEPRECATED_WARNINGS
+QT += core printsupport serialport
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -17,7 +19,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += -static
 
 #LIBS += -L$$PWD\lib -llidarTools
-LIBS += -L$$PWD\lib -llidarTools -lejson
+#LIBS += -L$$PWD\lib -llidarTools -lejson
 
 #--------------------------------------------------------------------------------------------
 #编译目录配置
@@ -26,13 +28,14 @@ MOC_DIR     = $$OUT_PWD/MOC
 RCC_DIR     = $$OUT_PWD/RES
 OBJECTS_DIR = $$OUT_PWD/OBJ
 
-INCLUDEPATH += $$PWD\..\lidarTools \
-
+include(../3rdParty/qtxlsx/src/xlsx/qtxlsx.pri)
+include($$PWD/../lidarTools/lidarTools.pri)
 
 INCLUDEPATH += \
     $$PWD\..\3rdParty\eigen-3.3.7 \
     $$PWD\..\3rdParty\ejson\include \
-    $$PWD\..\3rdParty\ejson\
+    $$PWD\..\3rdParty\ejson\    \
+    $$PWD\..\lidarTools
 
 DEPENDPATH += $$PWD\..\3rdParty\ejson\src
 
@@ -82,7 +85,7 @@ FORMS += \
     pages/TempSensor/temp_sensor_settings.ui \
     pages/TofCalibrt/tof_calibrt.ui
 
-include(../3rdParty/qtxlsx/src/xlsx/qtxlsx.pri)
+
 
 # Default rules for deployment.
 #qnx: target.path = /tmp/$${TARGET}/bin

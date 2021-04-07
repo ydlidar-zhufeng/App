@@ -118,12 +118,11 @@ void tof_calibrt::slot_check_setZeroStatus(){
         setZeroStatus = false;
         return;
     }
-    qDebug() << "slot_check_setZeroStatus";
+    timeoutCount++;
     if(timeoutCount > 5){
-        disconnect(m_read_timer,&QTimer::timeout,this,&tof_calibrt::slot_check_setZeroStatus);
+      //  disconnect(m_read_timer,&QTimer::timeout,this,&tof_calibrt::slot_check_setZeroStatus);
         m_read_timer->stop();
         timeoutCount = 0;
-        qDebug() << "运转到零位完成";
     }
 
 
@@ -265,6 +264,10 @@ void tof_calibrt::controlBtn(){
 
 bool tof_calibrt::modulusPoints(){
     //vec_point
+    if(array_index <20){
+        QMessageBox::warning(this,tr("拟合错误"),tr("当前行数为%1,小于20行").arg(array_index),QMessageBox::Cancel);
+        return false;
+    }
     vec_point.clear();
     _Tof_point point;
     for(int i=0;i<20; i++){
@@ -1082,19 +1085,34 @@ void tof_calibrt::on_btnAllRun_clicked()
         startPos = ui->lineStartingPos->text().toInt();
 
         qApp->processEvents();
-     //   getOncePointData();
+        getOncePointData();
         qApp->processEvents();
+    }
+
+
+
+    //是否自动标定
+    if(Qt::Checked ==  ui->checkBoxModulus->checkState()){
+        if(!modulusPoints())
+            return;
+    }
+
+    //是否自动写入模组
+    if(Qt::Checked ==  ui->checkBoxWriteIn->checkState()){
+        on_btnWritePararmts_clicked();
     }
 
     //全部标定完后，需要返回零位
     if(Qt::Checked ==  ui->checkBoxAutoZero->checkState()){
         on_btnReturnZeroPos_clicked();
-        QThread::msleep(2000);
+        QThread::msleep(4000);
         read_current_pos(ui->lineCurrentPos);
         CurPos = ui->lineCurrentPos->text().toInt();
         if(0 != CurPos){
             QMessageBox::warning(this,tr("电机回零位失败"),tr("当前坐标为%1").arg(CurPos),QMessageBox::Cancel);
+            return;
         }
+
     }
 
 }
@@ -1462,6 +1480,12 @@ void tof_calibrt::loadConfig(){
         settings.setValue("forwardStartSignal",2);
         settings.setValue("backStartSignal",2);
         settings.endGroup();
+
+        settings.beginGroup("Auto");
+        settings.setValue("autoSetZero",false);
+        settings.setValue("autoModulus",false);
+        settings.setValue("autoWriteIn",false);
+        settings.endGroup();
     }
 
     QSettings settings(filepath, QSettings::IniFormat);
@@ -1485,13 +1509,27 @@ void tof_calibrt::loadConfig(){
         ui->checkBox->setText("反转");
     }
 
+    settings.endGroup();
+
+    settings.beginGroup("Auto");
     if(settings.value("autoSetZero").toBool()){
         ui->checkBoxAutoZero->setCheckState(Qt::Checked);
     }else {
         ui->checkBoxAutoZero->setCheckState(Qt::Unchecked);
     }
-
+    if(settings.value("autoModulus").toBool()){
+        ui->checkBoxModulus->setCheckState(Qt::Checked);
+    }else {
+        ui->checkBoxModulus->setCheckState(Qt::Unchecked);
+    }
+    if(settings.value("autoWriteIn").toBool()){
+        ui->checkBoxWriteIn->setCheckState(Qt::Checked);
+    }else {
+        ui->checkBoxWriteIn->setCheckState(Qt::Unchecked);
+    }
     settings.endGroup();
+
+
     QString jsonPath = QDir::currentPath() + "/dtr_config.json";
 
     if(!QFile::exists(jsonPath)){
@@ -1547,13 +1585,24 @@ void tof_calibrt::saveConfig(){
     settings.setValue("direction",ck);
     settings.setValue("forwardStartSignal",ui->lineforwardSignal->text().toInt());
     settings.setValue("backStartSignal",ui->lineBackSignal->text().toInt());
+    settings.endGroup();
 
+    settings.beginGroup("Auto");
     if(Qt::Checked == ui->checkBoxAutoZero->checkState()){
         settings.setValue("autoSetZero",true);
     }else {
         settings.setValue("autoSetZero",false);
     }
-
+    if(Qt::Checked == ui->checkBoxModulus->checkState()){
+        settings.setValue("autoModulus",true);
+    }else {
+        settings.setValue("autoModulus",false);
+    }
+    if(Qt::Checked == ui->checkBoxWriteIn->checkState()){
+        settings.setValue("autoWriteIn",true);
+    }else {
+        settings.setValue("autoWriteIn",false);
+    }
     settings.endGroup();
 
     int row = ui->tableViewDtr->model()->rowCount();
