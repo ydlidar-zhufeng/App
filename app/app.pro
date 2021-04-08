@@ -4,6 +4,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
 CONFIG += console
+VERSION += 2.0.1
 #DEFINES += QT_DEPRECATED_WARNINGS
 QT += core printsupport serialport
 # The following define makes your compiler emit warnings if you use
