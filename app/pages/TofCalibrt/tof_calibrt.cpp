@@ -14,14 +14,12 @@
 #include <QTimer>
 #include <string.h>
 #include <QSettings>
-#include "ejson.h"
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonDocument>
 #include <QJsonParseError>
 
 using namespace Eigen;
-using namespace EasyJson;
 
 const int tof_array[10] ={100,150,200,300,400,600,800,1000,1200,6000};
 
@@ -32,8 +30,8 @@ tof_calibrt::tof_calibrt(QWidget *parent):
     lastTableRow(0)
 {
     ui->setupUi(this);
-    vec_point.resize(20);
     vec_point.clear();
+    vec_point.resize(20);
     memset(tof_para,0,sizeof(tof_para));
     init();
     initConnect();
@@ -67,6 +65,9 @@ void tof_calibrt::init(){
     ui->tbwgttof_calibrt->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     ui->tbwgttof_calibrt->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     ui->tbwgttof_calibrt->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tbwgttof_calibrt->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tbwgttof_calibrt->setSelectionBehavior(QAbstractItemView::SelectRows);
+
     ui->tbwgttof_calibrt->setHorizontalHeaderLabels(QStringList()<<"tof最小值"<<"tof平均值"<<"tof最大值"<<"peak最小值"<<"peak平均值"<< "peak最大值" << "tof误差");
     ui->tbwgttof_calibrt->setVerticalHeaderLabels(QStringList()<<"100(黑)"<<"100(白)" <<"150(黑)" << "150(白)" <<"200(黑)" << "200(白)" <<"300(黑)"<<"300(白)" << "400(黑)" <<"400(白)"
                                                   <<"600(黑)"<<"600(白)"<<"800(黑)" << "800(白)"<<"1000(黑)"<<"1000(白)"<<"1200(黑)"<<"1200(白)"<<"6000(黑)"<<"6000(白)");
@@ -111,6 +112,8 @@ void tof_calibrt::init(){
       m_read_timer = new QTimer();
       connect(m_read_timer,&QTimer::timeout,this,&tof_calibrt::slot_check_setZeroStatus);
     }
+
+    ui->tbwgttof_calibrt->viewport()->installEventFilter(this);
 }
 
 void tof_calibrt::slot_check_setZeroStatus(){
@@ -268,9 +271,11 @@ bool tof_calibrt::modulusPoints(){
         QMessageBox::warning(this,tr("拟合错误"),tr("当前行数为%1,小于20行").arg(array_index),QMessageBox::Cancel);
         return false;
     }
-    vec_point.clear();
-    _Tof_point point;
+
+
+    int pointIndx;
     for(int i=0;i<20; i++){
+        _Tof_point point;
         point.tof_min = ui->tbwgttof_calibrt->item(i,0)->text().toInt();
         point.tof_avg = ui->tbwgttof_calibrt->item(i,1)->text().toFloat();
         point.tof_max = ui->tbwgttof_calibrt->item(i,2)->text().toInt();
@@ -278,7 +283,13 @@ bool tof_calibrt::modulusPoints(){
         point.peak_avg = ui->tbwgttof_calibrt->item(i,4)->text().toDouble();
         point.peak_max = ui->tbwgttof_calibrt->item(i,5)->text().toInt();
         point.tof_deviation = ui->tbwgttof_calibrt->item(i,6)->text().toDouble();
-        vec_point.push_back(point);
+        QString title = ui->tbwgttof_calibrt->verticalHeaderItem(i)->text();
+        pointIndx = getVectorIndex(title);
+        if(-1 == pointIndx){
+            QMessageBox::critical(0,"拟合错误","拟合数据标题列头错误！",QMessageBox::Cancel);
+            return  false;
+        }
+        vec_point[i] = point;
     }
 
     QVector<array_modulus> vec_arr_modulus;
@@ -1093,8 +1104,10 @@ void tof_calibrt::on_btnAllRun_clicked()
 
     //是否自动标定
     if(Qt::Checked ==  ui->checkBoxModulus->checkState()){
-        if(!modulusPoints())
+        if(!modulusPoints()){
             return;
+        }
+
     }
 
     //是否自动写入模组
@@ -1529,6 +1542,16 @@ void tof_calibrt::loadConfig(){
     }
     settings.endGroup();
 
+    settings.beginGroup("table");
+    QStringList list = settings.value("vTitle").toStringList();
+    if(list.size() == 20){
+        int count = list.size();
+        for(int i=0;i<count;i++){
+            ui->tbwgttof_calibrt->verticalHeaderItem(i)->setText(list[i]);
+        }
+    }
+    settings.endGroup();
+
 
     QString jsonPath = QDir::currentPath() + "/dtr_config.json";
 
@@ -1604,6 +1627,16 @@ void tof_calibrt::saveConfig(){
         settings.setValue("autoWriteIn",false);
     }
     settings.endGroup();
+
+    settings.beginGroup("table");
+    QStringList list;
+
+    for(int i=0;i<20;i++){
+        list.append(ui->tbwgttof_calibrt->verticalHeaderItem(i)->text());
+    }
+    settings.setValue("vTitle",list);
+    settings.endGroup();
+
 
     int row = ui->tableViewDtr->model()->rowCount();
     if(!row){
@@ -1741,6 +1774,91 @@ void tof_calibrt::setDTRBtnStatus(bool status){
     }
 }
 
+int   tof_calibrt::getVectorIndex(QString data){
+    int num = -1;
+    int index =  data.indexOf('(');
+    if(-1 == index){
+        return num;
+    }
+    int dis = data.mid(0,index + 1).toInt();
+    switch (dis) {
+    case 100:
+        if(data.contains("黑")){
+            num = 0;
+        }else {
+            num = 1;
+        }
+        break;
+    case 150:
+        if(data.contains("黑")){
+            num = 2;
+        }else {
+            num = 3;
+        }
+        break;
+    case 200:
+        if(data.contains("黑")){
+            num = 4;
+        }else {
+            num = 5;
+        }
+        break;
+    case 300:
+        if(data.contains("黑")){
+            num = 6;
+        }else {
+            num = 7;
+        }
+        break;
+    case 400:
+        if(data.contains("黑")){
+            num = 8;
+        }else {
+            num = 10;
+        }
+        break;
+    case 600:
+        if(data.contains("黑")){
+            num = 11;
+        }else {
+            num = 12;
+        }
+        break;
+    case 800:
+        if(data.contains("黑")){
+            num = 13;
+        }else {
+            num = 14;
+        }
+        break;
+    case 1000:
+        if(data.contains("黑")){
+            num = 14;
+        }else {
+            num = 15;
+        }
+        break;
+    case 1200:
+        if(data.contains("黑")){
+            num = 16;
+        }else {
+            num = 17;
+        }
+        break;
+    case 6000:
+        if(data.contains("黑")){
+            num = 18;
+        }else {
+            num = 19;
+        }
+        break;
+    default:
+        num = -1;
+        break;
+    }
+    return  num;
+}
+
 void tof_calibrt::on_btnGetCurrentPos_clicked()
 {
     read_current_pos(ui->lineCurrentPos);
@@ -1752,3 +1870,4 @@ void tof_calibrt::on_btntableDtrClear_clicked()
     if (!row)
         ui->tableViewDtr->model()->removeRows(0,row);
 }
+

@@ -133,6 +133,8 @@ private:
     void saveConfig();
     void GetDtrParm();
     void  setDTRBtnStatus(bool status);
+    int   getVectorIndex(QString data);
+
 private:
     Ui::tof_calibrt *ui;
     bool tof_status;

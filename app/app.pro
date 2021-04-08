@@ -4,13 +4,13 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
 CONFIG += console
-DEFINES += QT_DEPRECATED_WARNINGS
+#DEFINES += QT_DEPRECATED_WARNINGS
 QT += core printsupport serialport
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS
+#DEFINES += QT_DEPRECATED_WARNINGS
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -32,15 +32,9 @@ include(../3rdParty/qtxlsx/src/xlsx/qtxlsx.pri)
 include($$PWD/../lidarTools/lidarTools.pri)
 
 INCLUDEPATH += \
+    $$PWD\..\lidarTools \
     $$PWD\..\3rdParty\eigen-3.3.7 \
-    $$PWD\..\3rdParty\ejson\include \
-    $$PWD\..\3rdParty\ejson\    \
-    $$PWD\..\lidarTools
-
-DEPENDPATH += $$PWD\..\3rdParty\ejson\src
-
-
-
+    $$PWD\..\3rdParty\eigen-3.3.7\Eigen
 
 win32{
 #LIBS +=-L$$PWD\lib -llidarTools
